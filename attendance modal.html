@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Attendance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm" type="module"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+  <div class="bg-white p-8 rounded shadow w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">Submit Attendance</h2>
+    <form id="attendance-form" class="space-y-4">
+      <div>
+        <label class="block mb-1 text-sm font-medium">Student ID:</label>
+        <input type="text" id="student-id" class="w-full border px-3 py-2 rounded" required placeholder="Enter Student ID">
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-medium">Date:</label>
+        <input type="date" id="attendance-date" class="w-full border px-3 py-2 rounded" disabled>
+      </div>
+      <button type="submit" id="submit-btn" class="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50">Submit Attendance</button>
+    </form>
+    <div id="msg" class="mt-4 hidden text-center text-sm"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://qhrdtxuwxrnbxvtyxfmj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocmR0eHV3eHJuYnh2dHl4Zm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNTQ5NTIsImV4cCI6MjA2MzgzMDk1Mn0.H38kfGlcwuIz9Ir0MKpHuHgUsXfBfPN17IxI_4VLCEc'
+    );
+
+    const form = document.getElementById('attendance-form');
+    const studentIdInput = document.getElementById('student-id');
+    const dateInput = document.getElementById('attendance-date');
+    const submitBtn = document.getElementById('submit-btn');
+    const msg = document.getElementById('msg');
+
+    function showMsg(text, isError = false) {
+      msg.textContent = text;
+      msg.className = 'mt-4 text-center text-sm p-2 rounded ' + 
+        (isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700');
+      msg.classList.remove('hidden');
+    }
+
+    function setTodayDate() {
+      const today = new Date();
+      dateInput.value = today.toISOString().split('T')[0];
+    }
+
+    setTodayDate();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      msg.classList.add('hidden');
+
+      const id = studentIdInput.value.trim();
+      const date = dateInput.value;
+
+      // Check student exists
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('student_id, attendance_count, streak')
+        .eq('student_id', id)
+        .single();
+
+      if (studentError || !student) {
+        showMsg('Student not found.', true);
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Check if attendance already exists
+      const { data: existing, error: existError } = await supabase
+        .from('attendance_logs')
+        .select('attendance_id')
+        .eq('student_id', id)
+        .eq('date', date)
+        .single();
+
+      if (existing) {
+        showMsg('Attendance already submitted for today.', true);
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Get yesterday's attendance
+      const yesterday = new Date(date);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yDate = yesterday.toISOString().split('T')[0];
+
+      const { data: yLog } = await supabase
+        .from('attendance_logs')
+        .select('present')
+        .eq('student_id', id)
+        .eq('date', yDate)
+        .single();
+
+      let newStreak = 0;
+      if (yLog && yLog.present) {
+        newStreak = student.streak + 1;
+      } else {
+        newStreak = 0;
+      }
+
+      // Insert attendance log
+      const { error: insertError } = await supabase
+        .from('attendance_logs')
+        .insert({
+          student_id: id,
+          date: date,
+          present: true,
+          streak: newStreak
+        });
+
+      if (insertError) {
+        showMsg('Error saving attendance.', true);
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Update student record
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({
+          attendance_count: student.attendance_count + 1,
+          streak: newStreak
+        })
+        .eq('student_id', id);
+
+      if (updateError) {
+        showMsg('Error updating student.', true);
+        submitBtn.disabled = false;
+        return;
+      }
+
+      showMsg('Attendance submitted successfully!');
+      submitBtn.disabled = false;
+      studentIdInput.value = '';
+    });
+  </script>
+</body>
+</html>
