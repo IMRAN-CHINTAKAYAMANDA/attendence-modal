@@ -2,31 +2,165 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Submit Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Submit Attendance | Smart Tracker</title>
+  <!-- Tailwind CSS + Google Fonts + subtle background pattern -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm" type="module"></script>
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+      position: relative;
+    }
+    /* modern card effect */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(0px);
+      border-radius: 2rem;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .glass-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 30px 50px -15px rgba(0, 0, 0, 0.3);
+    }
+    .input-modern {
+      transition: all 0.2s;
+      background-color: #f9fafb;
+      border: 1px solid #e2e8f0;
+    }
+    .input-modern:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      outline: none;
+      background-color: white;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #4f46e5, #7c3aed);
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(95deg, #4338ca, #6d28d9);
+      transform: scale(0.98);
+      box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+    }
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+    .date-badge {
+      background: #f1f5f9;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #1e293b;
+      border: 1px solid #e2e8f0;
+    }
+    .success-message {
+      animation: fadeSlideUp 0.3s ease-out;
+    }
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .attribution {
+      letter-spacing: -0.2px;
+    }
+    input:disabled {
+      background-color: #f1f5f9;
+      color: #334155;
+      cursor: default;
+      opacity: 0.9;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-  <div class="bg-white p-8 rounded shadow w-full max-w-md">
-    <h2 class="text-2xl font-bold mb-6 text-center">Submit Attendance</h2>
-    <form id="attendance-form" class="space-y-4">
-      <div>
-        <label class="block mb-1 text-sm font-medium">Student ID:</label>
-        <input type="text" id="student-id" class="w-full border px-3 py-2 rounded" required placeholder="Enter Student ID">
+<body class="flex items-center justify-center min-h-screen p-5">
+
+  <div class="w-full max-w-md relative">
+    <!-- decorative floating elements (pure ui) -->
+    <div class="absolute -top-6 -left-6 w-20 h-20 bg-indigo-300 rounded-full opacity-30 blur-2xl"></div>
+    <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-purple-300 rounded-full opacity-30 blur-2xl"></div>
+    
+    <!-- main card -->
+    <div class="glass-card p-6 md:p-8 w-full">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12V8H4v8h10" />
+            <path d="M12 2v4" />
+            <path d="M4 4h16v2H4z" />
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <path d="M15 17v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+            <circle cx="17" cy="18" r="2" />
+            <circle cx="9" cy="10" r="1" />
+            <circle cx="15" cy="10" r="1" />
+          </svg>
+        </div>
+        <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-800 to-gray-900 bg-clip-text text-transparent">Mark Attendance</h2>
+        <p class="text-gray-500 text-sm mt-1">Record presence & maintain streak</p>
       </div>
-      <div>
-        <label class="block mb-1 text-sm font-medium">Date:</label>
-        <input type="date" id="attendance-date" class="w-full border px-3 py-2 rounded" disabled>
+
+      <form id="attendance-form" class="space-y-5">
+        <!-- Student ID field with icon -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Student ID
+          </label>
+          <input type="text" id="student-id" class="w-full border border-gray-200 input-modern px-4 py-3 rounded-xl text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-300 transition" required placeholder="e.g., STU-1234 or 101">
+        </div>
+
+        <!-- Date field with badge style, disabled but enhanced -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Date (today)
+          </label>
+          <div class="relative">
+            <input type="date" id="attendance-date" class="w-full border border-gray-200 bg-gray-50 text-gray-700 px-4 py-3 rounded-xl cursor-default font-medium" disabled>
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c6f78" stroke-width="1.8"><path d="M4 7h16M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7M4 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><line x1="8" y1="3" x2="8" y2="5"/><line x1="16" y1="3" x2="16" y2="5"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button with loader state integrated -->
+        <button type="submit" id="submit-btn" class="btn-primary w-full text-white font-semibold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition"><path d="M20 12V8H4v8h10"/><path d="m16 14 4 4-4 4"/><path d="M20 18h-6"/></svg>
+          <span>Confirm Attendance</span>
+        </button>
+      </form>
+
+      <!-- Message area with smooth animation -->
+      <div id="msg" class="mt-5 hidden text-center text-sm rounded-xl p-3 backdrop-blur-sm transition-all success-message"></div>
+
+      <!-- subtle extra info about streak -->
+      <div class="mt-6 text-center text-xs text-gray-400 border-t border-gray-100 pt-4 attribution">
+        <span class="inline-flex items-center gap-1">
+          <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 
+          Streak updates automatically
+        </span>
+        <span class="mx-2">•</span>
+        <span>One entry per day</span>
       </div>
-      <button type="submit" id="submit-btn" class="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50">Submit Attendance</button>
-    </form>
-    <div id="msg" class="mt-4 hidden text-center text-sm"></div>
+    </div>
   </div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+    // Supabase client (original credentials, untouched)
     const supabase = createClient(
       'https://qhrdtxuwxrnbxvtyxfmj.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocmR0eHV3eHJuYnh2dHl4Zm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNTQ5NTIsImV4cCI6MjA2MzgzMDk1Mn0.H38kfGlcwuIz9Ir0MKpHuHgUsXfBfPN17IxI_4VLCEc'
@@ -40,107 +174,182 @@
 
     function showMsg(text, isError = false) {
       msg.textContent = text;
-      msg.className = 'mt-4 text-center text-sm p-2 rounded ' + 
-        (isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700');
+      // remove previous classes and add fresh styling with animations
+      msg.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+      if (isError) {
+        msg.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+        msg.style.backgroundColor = '#fef2f2';
+      } else {
+        msg.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+        msg.style.backgroundColor = '#ecfdf5';
+      }
       msg.classList.remove('hidden');
+      // smooth scroll into view if needed
+      msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function setTodayDate() {
       const today = new Date();
-      dateInput.value = today.toISOString().split('T')[0];
+      // Format YYYY-MM-DD exactly
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      dateInput.value = `${year}-${month}-${day}`;
     }
 
     setTodayDate();
 
+    // Reset button state with animation and safe error handling
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // disable button to avoid double-submit
       submitBtn.disabled = true;
       msg.classList.add('hidden');
-
+      
+      // Optional: add a little loading indicator inside button
+      const originalBtnHTML = submitBtn.innerHTML;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Processing...</span>
+      `;
+      
       const id = studentIdInput.value.trim();
       const date = dateInput.value;
 
-      // Check student exists
-      const { data: student, error: studentError } = await supabase
-        .from('students')
-        .select('student_id, attendance_count, streak')
-        .eq('student_id', id)
-        .single();
-
-      if (studentError || !student) {
-        showMsg('Student not found.', true);
-        submitBtn.disabled = false;
+      // validation: student ID must not be empty
+      if (!id) {
+        showMsg('Please enter a valid Student ID.', true);
+        resetButtonState(originalBtnHTML);
         return;
       }
 
-      // Check if attendance already exists
-      const { data: existing, error: existError } = await supabase
-        .from('attendance_logs')
-        .select('attendance_id')
-        .eq('student_id', id)
-        .eq('date', date)
-        .single();
+      try {
+        // 1. Check student exists
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('student_id, attendance_count, streak')
+          .eq('student_id', id)
+          .maybeSingle();  // using maybeSingle to avoid error when no rows
 
-      if (existing) {
-        showMsg('Attendance already submitted for today.', true);
+        if (studentError || !student) {
+          showMsg(`Student not found. ID: "${id}" does not exist.`, true);
+          resetButtonState(originalBtnHTML);
+          return;
+        }
+
+        // 2. Check if attendance already exists for given date
+        const { data: existing, error: existError } = await supabase
+          .from('attendance_logs')
+          .select('attendance_id')
+          .eq('student_id', id)
+          .eq('date', date)
+          .maybeSingle();
+
+        if (existing) {
+          showMsg('⚠️ Attendance already submitted for today. Duplicate not allowed.', true);
+          resetButtonState(originalBtnHTML);
+          return;
+        }
+
+        // 3. Get yesterday's attendance for streak calculation
+        const yesterdayDate = new Date(date);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yDate = yesterdayDate.toISOString().split('T')[0];
+        
+        let newStreak = 0;
+        // fetch yesterday's log if exists
+        const { data: yLog, error: yLogError } = await supabase
+          .from('attendance_logs')
+          .select('present')
+          .eq('student_id', id)
+          .eq('date', yDate)
+          .maybeSingle();
+
+        // if yesterday's log present and present == true, increment streak, else reset to 0
+        if (yLog && yLog.present === true) {
+          newStreak = (student.streak || 0) + 1;
+        } else {
+          newStreak = 0;
+        }
+
+        // 4. Insert attendance log (present = true)
+        const { error: insertError } = await supabase
+          .from('attendance_logs')
+          .insert({
+            student_id: id,
+            date: date,
+            present: true,
+            streak: newStreak
+          });
+
+        if (insertError) {
+          console.error('Insert log error:', insertError);
+          showMsg('Failed to save attendance record. Please try again.', true);
+          resetButtonState(originalBtnHTML);
+          return;
+        }
+
+        // 5. Update student record: attendance_count +1, streak update
+        const currentCount = student.attendance_count || 0;
+        const { error: updateError } = await supabase
+          .from('students')
+          .update({
+            attendance_count: currentCount + 1,
+            streak: newStreak
+          })
+          .eq('student_id', id);
+
+        if (updateError) {
+          showMsg('Attendance logged but student summary update failed. Contact support.', true);
+          resetButtonState(originalBtnHTML);
+          return;
+        }
+
+        // success message with streak info if needed
+        let successMessage = `✅ Attendance recorded! ${newStreak > 0 ? `🔥 Current streak: ${newStreak} day${newStreak !== 1 ? 's' : ''}` : 'Streak restarted. Come back tomorrow!'}`;
+        showMsg(successMessage, false);
+        
+        // clear student id field after successful submission
+        studentIdInput.value = '';
+        // keep date as is (today's date remains)
+        
+        // optional: focus back to student id field for quick scanning
+        studentIdInput.focus();
+        
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        showMsg('Network or server error. Please check connection and retry.', true);
+      } finally {
+        resetButtonState(originalBtnHTML);
+      }
+      
+      function resetButtonState(originalHtml) {
         submitBtn.disabled = false;
-        return;
+        submitBtn.innerHTML = originalHtml;
       }
-
-      // Get yesterday's attendance
-      const yesterday = new Date(date);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yDate = yesterday.toISOString().split('T')[0];
-
-      const { data: yLog } = await supabase
-        .from('attendance_logs')
-        .select('present')
-        .eq('student_id', id)
-        .eq('date', yDate)
-        .single();
-
-      let newStreak = 0;
-      if (yLog && yLog.present) {
-        newStreak = student.streak + 1;
-      } else {
-        newStreak = 0;
-      }
-
-      // Insert attendance log
-      const { error: insertError } = await supabase
-        .from('attendance_logs')
-        .insert({
-          student_id: id,
-          date: date,
-          present: true,
-          streak: newStreak
-        });
-
-      if (insertError) {
-        showMsg('Error saving attendance.', true);
-        submitBtn.disabled = false;
-        return;
-      }
-
-      // Update student record
-      const { error: updateError } = await supabase
-        .from('students')
-        .update({
-          attendance_count: student.attendance_count + 1,
-          streak: newStreak
-        })
-        .eq('student_id', id);
-
-      if (updateError) {
-        showMsg('Error updating student.', true);
-        submitBtn.disabled = false;
-        return;
-      }
-
-      showMsg('Attendance submitted successfully!');
-      submitBtn.disabled = false;
-      studentIdInput.value = '';
     });
+    
+    // also handle edge: if any other dynamic, keep original button structure clean
+    // little additional UX: if enter pressed on input, form submits normally (already)
+    // enhance: remove message when typing
+    studentIdInput.addEventListener('input', () => {
+      if (!msg.classList.contains('hidden')) {
+        msg.classList.add('hidden');
+      }
+    });
+    
+    // also manual reset if needed: set today date again on page visibility or focus (robust)
+    window.addEventListener('focus', () => {
+      setTodayDate();
+    });
+    
+    // Also for safety: ensure date remains today if page stays open overnight? 
+    // But since it's a static date on load we set again on focus, perfect.
+    // Prefer smooth submission
   </script>
 </body>
 </html>
